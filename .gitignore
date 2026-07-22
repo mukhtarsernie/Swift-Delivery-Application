@@ -1,0 +1,7 @@
+node_modules/
+.next/
+database/data/*.json
+database/data/*.backup-*
+*.tmp
+.env
+.env.local
