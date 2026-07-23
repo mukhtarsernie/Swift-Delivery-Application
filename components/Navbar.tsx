@@ -54,7 +54,7 @@ export default function Navbar() {
           <div className="ml-3 pl-3 border-l border-gray-200 flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                {user.name.charAt(0).toUpperCase()}
+                {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
               <span className="text-sm text-gray-600 font-medium">{user.name}</span>
             </div>
@@ -102,7 +102,7 @@ export default function Navbar() {
             <div className="pt-3 mt-2 border-t border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                  {user.name.charAt(0).toUpperCase()}
+                  {(user.name || 'U').charAt(0).toUpperCase()}
                 </div>
                 <span className="text-sm text-gray-600">{user.name}</span>
               </div>
