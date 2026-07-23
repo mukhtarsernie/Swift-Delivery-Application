@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
+import { useNotification, playSound } from '../../components/useNotification';
 
 interface Earnings {
   date: string;
@@ -26,6 +27,8 @@ export default function AdminDashboard() {
   const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const notify = useNotification();
+  const prevPendingRef = useRef(0);
 
   useEffect(() => {
     Promise.all([
@@ -34,10 +37,29 @@ export default function AdminDashboard() {
     ]).then(([e, o]) => {
       setEarnings(e);
       setOrders(o);
+      prevPendingRef.current = o.filter((x: Order) => x.status === 'pending').length;
     }).catch((err) => {
       console.error('Dashboard load error:', err);
     }).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/orders');
+        if (!res.ok) return;
+        const data: Order[] = await res.json();
+        const newPending = data.filter(o => o.status === 'pending').length;
+        if (newPending > prevPendingRef.current && prevPendingRef.current > 0) {
+          notify('New Order!', `You have ${newPending} pending order${newPending !== 1 ? 's' : ''}.`);
+          playSound();
+        }
+        prevPendingRef.current = newPending;
+        setOrders(data);
+      } catch {}
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [notify]);
 
   const pendingOrders = orders.filter((o) => o.status === 'pending');
 

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import Navbar from '../../../components/Navbar';
 import ChatBox from '../../../components/ChatBox';
 import ErrorBoundary from '../../../components/ErrorBoundary';
+import { useNotification, playSound } from '../../../components/useNotification';
 
 const LiveMap = dynamic(() => import('../../../components/LiveMap'), { ssr: false });
 
@@ -37,15 +38,43 @@ export default function Tracking() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const notify = useNotification();
+  const prevStatusRef = useRef('');
 
   useEffect(() => {
     if (!id) return;
     fetch(`/api/orders/${id}`)
       .then((res) => (res.ok ? res.json() : Promise.reject('Order not found')))
-      .then((data) => setOrder(data))
+      .then((data) => {
+        setOrder(data);
+        prevStatusRef.current = data.status;
+      })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders/${id}`);
+        if (!res.ok) return;
+        const data: Order = await res.json();
+        if (data.status !== prevStatusRef.current && prevStatusRef.current) {
+          const labels: Record<string, string> = {
+            accepted: 'Your order has been accepted!', picked_up: 'Package picked up!',
+            in_transit: 'Rider is on the way!', delivered: 'Package delivered!', rejected: 'Order was rejected'
+          };
+          const msg = labels[data.status] || `Status: ${data.status}`;
+          notify('Delivery Update', msg);
+          playSound();
+        }
+        prevStatusRef.current = data.status;
+        setOrder(data);
+      } catch {}
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [id, notify]);
 
   const currentStepIdx = order
     ? (order.status === 'rejected' ? -1 : STATUS_STEPS.findIndex((s) => s.key === order.status))
