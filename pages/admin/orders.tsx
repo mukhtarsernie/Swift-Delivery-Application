@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
 import ChatBox from '../../components/ChatBox';
+import { playSound } from '../../components/useNotification';
 
 function LocationUpdater({ orderId }: { orderId: string }) {
   const [sharing, setSharing] = useState(false);
@@ -156,6 +157,7 @@ export default function AdminOrders() {
         if (updated) {
           setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
           setSelected(updated);
+          playSound();
         }
       }
     } catch (err) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { playSound } from './useNotification';
 
 interface Message {
   id: string;
@@ -66,6 +67,12 @@ export default function ChatBox({ orderId, role }: { orderId: string; role?: str
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > prevCountRef.current && prevCountRef.current > 0) {
+      const last = messages[messages.length - 1];
+      const isAdmin = role === 'admin';
+      const fromOther = isAdmin ? last.sender_role === 'customer' : last.sender_role === 'admin';
+      if (fromOther) playSound();
+    }
     prevCountRef.current = messages.length;
   }, [messages]);
 
