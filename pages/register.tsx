@@ -6,6 +6,8 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('customer');
+  const [adminCode, setAdminCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -33,8 +35,8 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await register(name, email, password, phone);
-      router.push('/customer/dashboard');
+      await register(name, email, password, phone, role, adminCode);
+      router.push(role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -103,6 +105,30 @@ export default function Register() {
                 placeholder="08012345678"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Account Type</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-gray-50 focus:bg-white text-sm"
+              >
+                <option value="customer">Customer (Book Deliveries)</option>
+                <option value="admin">Admin / Rider (Manage Deliveries)</option>
+              </select>
+            </div>
+            {role === 'admin' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Admin Passcode *</label>
+                <input
+                  type="password"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-gray-50 focus:bg-white text-sm"
+                  required
+                  placeholder="Enter admin secret code"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <input

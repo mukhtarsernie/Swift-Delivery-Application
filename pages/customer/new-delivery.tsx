@@ -4,8 +4,21 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
 
+const ZONES = [
+  { name:'Kano Municipal (City Center / Sabon Gari / Bompai)', price:1000 },
+  { name:'Nassarawa (GRA / Hotoro / Zoo Road)', price:1000 },
+  { name:'Tarauni (Sheka / Gyadi-Gyadi / Court Road)', price:1200 },
+  { name:'Fagge (Murtala Muhammed Way / Kofar Ruwa)', price:1000 },
+  { name:'Gwale (Dandago / Sani Mainagge / Kabuga)', price:1200 },
+  { name:'Dala (Kofar Mazugal / Mariri / Dakata)', price:1200 },
+  { name:'Ungogo (Yankaba / Jaen / Rijiyar Zaki)', price:1500 },
+  { name:'Kumbotso (Zaria Road / Kofar Kabuga / Danbare)', price:1500 }
+];
+
 export default function NewDelivery() {
   const { user } = useAuth();
+  const [pickupZone, setPickupZone] = useState('');
+  const [deliveryZone, setDeliveryZone] = useState('');
   const [pickup, setPickup] = useState('');
   const [receiverAddress, setReceiverAddress] = useState('');
   const [receiverName, setReceiverName] = useState('');
@@ -19,9 +32,11 @@ export default function NewDelivery() {
   const router = useRouter();
 
   const estimatePrice = () => {
-    if (pickup && receiverAddress) {
-      setPrice(1500 + Math.floor(Math.random() * 3500));
-    }
+    const p = parseInt(pickupZone), d = parseInt(deliveryZone);
+    if (isNaN(p) || isNaN(d)) { setError('Select both pickup and delivery zones first'); return; }
+    setError('');
+    if (p === d) setPrice(ZONES[p].price);
+    else setPrice(1500);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +55,8 @@ export default function NewDelivery() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pickup_address: pickup,
+          pickup_zone: pickupZone,
+          delivery_zone: deliveryZone,
           receiver_address: receiverAddress,
           receiver_name: receiverName,
           receiver_phone: receiverPhone,
@@ -71,7 +88,14 @@ export default function NewDelivery() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Address *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Zone *</label>
+            <select value={pickupZone} onChange={(e) => { setPickupZone(e.target.value); setPrice(null); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+              <option value="">-- Select pickup area --</option>
+              {ZONES.map((z,i)=><option key={i} value={i}>{z.name} - ₦{z.price.toLocaleString()}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Address Details *</label>
             <input
               type="text"
               value={pickup}
@@ -82,6 +106,13 @@ export default function NewDelivery() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Zone *</label>
+            <select value={deliveryZone} onChange={(e) => { setDeliveryZone(e.target.value); setPrice(null); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+              <option value="">-- Select delivery area --</option>
+              {ZONES.map((z,i)=><option key={i} value={i}>{z.name} - ₦{z.price.toLocaleString()}</option>)}
+            </select>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Receiver's Address *</label>
             <input

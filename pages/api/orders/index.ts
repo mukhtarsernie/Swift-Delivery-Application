@@ -9,20 +9,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const user = authenticate(req, res, 'customer');
       if (!user) return;
 
-      const { pickup_address, receiver_address, receiver_name, receiver_phone, package_description, payment_method, sender_phone } = req.body;
+      const { pickup_address, receiver_address, receiver_name, receiver_phone, package_description, payment_method, sender_phone, pickup_zone, delivery_zone } = req.body;
 
       if (!pickup_address || !receiver_address || !receiver_phone || !package_description) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
       const customer = db.users.findById(user.id);
-      const price = calculatePrice(pickup_address, receiver_address);
+      const pz = parseInt(pickup_zone) || 0;
+      const dz = parseInt(delivery_zone) || 0;
+      const price = calculatePrice(pz, dz);
 
       const order = {
         id: uuidv4(),
         customer_id: user.id,
         customer_name: customer?.name || '',
         customer_phone: sender_phone || customer?.phone || '',
+        pickup_zone: pz,
+        delivery_zone: dz,
         pickup_address,
         receiver_address,
         receiver_name: receiver_name || '',
@@ -66,6 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-function calculatePrice(_pickup: string, _receiver: string): number {
-  return 1500 + Math.floor(Math.random() * 3500);
+function calculatePrice(pickupZoneIdx: number, deliveryZoneIdx: number): number {
+  const zones = [1000,1000,1200,1000,1200,1200,1500,1500];
+  if (pickupZoneIdx === deliveryZoneIdx) return zones[pickupZoneIdx] || 1500;
+  return 1500;
 }

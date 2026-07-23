@@ -3,16 +3,32 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { signToken } from '../../../lib/auth';
 import db from '../../../lib/db';
+import fs from 'fs';
+import path from 'path';
+
+const CODE_FILE = path.join(process.cwd(), 'database', 'data', 'admin_code.txt');
+
+function getAdminCode(): string {
+  try { return fs.readFileSync(CODE_FILE, 'utf-8').trim() || 'swift2024'; } catch { return 'swift2024'; }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, role, adminCode } = req.body;
 
   if (!name || !email || !password || !phone) {
     return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const userRole = role || 'customer';
+  if (userRole === 'admin') {
+    if (!adminCode || adminCode !== getAdminCode()) {
+      return res.status(403).json({ error: 'Invalid admin passcode' });
+    }
   }
 
   const existing = db.users.findByEmail(email);
@@ -27,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     email,
     password: hashedPassword,
     phone,
-    role: 'customer',
+    role: userRole,
     created_at: new Date().toISOString(),
   };
 
